@@ -8,7 +8,6 @@ import re
 # Initialize your OpenAI API credentials
 openai.api_key = st.secrets["openai_api_key"]
 
-
 # This is a helper function to read PDFs
 def read_pdf(pdf, pages):
     text = ""
@@ -81,7 +80,7 @@ def main():
                     st.markdown(response)
                 except openai.error.InvalidRequestError as e:
                     # Extract the number of requested tokens and the maximum allowed from the error message
-                    tokens_requested, max_tokens = re.findall(r'\d+', str(e))
+                    max_tokens, tokens_requested = re.findall(r'\d+', str(e))
                     st.error(f"You have requested {tokens_requested} tokens when the maximum allowed is {max_tokens}. Please reduce the number of pages in the configuration bar.")
             else:
                 st.warning('Please, enter a question.')
