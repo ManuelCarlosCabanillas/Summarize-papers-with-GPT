@@ -131,7 +131,7 @@ def embeddings():
         return vectorstore
 
     def create_conversation_chain(vectorstore):
-        llm = ChatOpenAI()
+        llm = ChatOpenAI(api_key=openai.api_key)
         memory = ConversationBufferMemory(
             memory_key='chat_history', return_messages=True)
         conversation_chain = ConversationalRetrievalChain.from_llm(
