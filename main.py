@@ -1,39 +1,60 @@
-
-# Import the necessary libraries
 import streamlit as st
 from PyPDF2 import PdfReader
 import openai
 import re
+from PyPDF2 import PdfReader
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.embeddings import OpenAIEmbeddings, HuggingFaceInstructEmbeddings
+from langchain.vectorstores import FAISS
+from langchain.chat_models import ChatOpenAI
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
 
 # Initialize your OpenAI API credentials
-openai.api_key = st.secrets["openai_api_key"]
-
-# This is a helper function to read PDFs
-def read_pdf(pdf, pages):
-    text = ""
-    for page in pages:
-        text += pdf.pages[page].extract_text()
-    return text
-
-def ask_gpt3(question, context, temperature, max_tokens, top_p, frequency_penalty, role):
-    message = [
-        {"role": "system", "content": "You have the following information from the paper: "+context},
-        {"role": role, "content": question}
-    ]
-
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k",
-        messages=message,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        top_p=top_p,
-        frequency_penalty=frequency_penalty
-    )
-    return response['choices'][0]['message']['content']
+openai.api_key = "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"
 
 def main():
     st.title('🧠 GPT-3 for Scientific Papers')
-    st.markdown('An application that allows you to upload a scientific paper, then the AI will read it and you can ask questions about the content of the paper.')
+    st.markdown('Choose which version of the application to run')
+
+    # Choose version
+    version = st.selectbox("Choose version", ["Select","Context", "Embeddings"])
+    
+    if version == "Context":
+        context()
+        # Initial version
+        pass
+    elif version == "Embeddings":
+        # Alternative version
+        embeddings()
+    else:
+        st.warning("Please select a version of the application to run.")
+
+def context():    
+    # This is a helper function to read PDFs
+    def read_pdf(pdf, pages):
+        text = ""
+        for page in pages:
+            text += pdf.pages[page].extract_text()
+        return text
+
+    def ask_gpt3(question, context, temperature, max_tokens, top_p, frequency_penalty, role):
+        message = [
+            {"role": "system", "content": "You have the following information from the paper: "+context},
+            {"role": role, "content": question}
+        ]
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-16k",
+            messages=message,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty
+        )
+        return response['choices'][0]['message']['content']
+    
+    st.title('Ask directly GPT on the context given by a pdf document')
 
     # Configure the file uploader
     uploaded_file = st.file_uploader("Upload your PDF file", type="pdf")
@@ -84,6 +105,87 @@ def main():
                     st.error(f"You have requested {tokens_requested} tokens when the maximum allowed is {max_tokens}. Please reduce the number of pages in the configuration bar.")
             else:
                 st.warning('Please, enter a question.')
+
+def embeddings():
+    def get_content_from_pdfs(pdf_docs):
+        text = ""
+        for pdf in pdf_docs:
+            pdf_reader = PdfReader(pdf)
+            for page in pdf_reader.pages:
+                text += page.extract_text()
+        return text
+
+    def split_text_into_chunks(text):
+        text_splitter = CharacterTextSplitter(
+            separator="\n",
+            chunk_size=1000,
+            chunk_overlap=200,
+            length_function=len
+        )
+        chunks = text_splitter.split_text(text)
+        return chunks
+
+    def generate_vectorstore(text_chunks):
+        embeddings = OpenAIEmbeddings()
+        vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
+        return vectorstore
+
+    def create_conversation_chain(vectorstore):
+        llm = ChatOpenAI()
+        memory = ConversationBufferMemory(
+            memory_key='chat_history', return_messages=True)
+        conversation_chain = ConversationalRetrievalChain.from_llm(
+            llm=llm,
+            retriever=vectorstore.as_retriever(),
+            memory=memory
+        )
+        return conversation_chain
+
+    def handle_userinput(user_question):
+        if st.session_state.conversation is not None:
+            response = st.session_state.conversation({'question': user_question})
+            st.session_state.chat_history = response['chat_history']
+
+            for i, message in enumerate(st.session_state.chat_history):
+                if i % 2 == 0:  # User's messages
+                    st.write(message.content)
+                else:  # Bot's messages
+                    st.markdown(f'**{message.content}**')
+        else:
+            st.warning('Please process your documents before asking a question.')
+    
+    if "conversation" not in st.session_state:
+        st.session_state.conversation = None
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = None
+
+    st.sidebar.header("Model Parameters")
+    chunk_size = st.sidebar.slider("Chunk Size", 500, 2000, 1000)
+    chunk_overlap = st.sidebar.slider("Chunk Overlap", 0, 500, 200)
+    
+    st.header("Upload and Process Documents")
+    pdf_docs = st.file_uploader(
+        "Upload your PDFs here and click on 'Process'", accept_multiple_files=True)
+
+    if st.button("Process"):
+        with st.spinner("Processing"):
+            # get pdf text
+            raw_text = get_content_from_pdfs(pdf_docs)
+
+                # get the text chunks
+            text_chunks = split_text_into_chunks(raw_text)
+
+                # create vector store
+            vectorstore = generate_vectorstore(text_chunks)
+
+                # create conversation chain
+            st.session_state.conversation = create_conversation_chain(vectorstore)
+        
+    if st.session_state.conversation is not None:
+        st.header("Ask something about your documents")
+        user_question = st.text_input("")
+        if user_question:
+            handle_userinput(user_question)
 
 if __name__ == '__main__':
     main()
