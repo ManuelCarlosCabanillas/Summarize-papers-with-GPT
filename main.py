@@ -10,8 +10,6 @@ from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 
-# Initialize your OpenAI API credentials
-openai.api_key = st.secrets["openai_api_key"]
 
 def main():
     st.title('🧠 GPT-3 for Scientific Papers')
@@ -30,7 +28,8 @@ def main():
     else:
         st.warning("Please select a version of the application to run.")
 
-def context():    
+def context():
+    openai.api_key = st.secrets["openai_api_key"]    
     # This is a helper function to read PDFs
     def read_pdf(pdf, pages):
         text = ""
@@ -107,6 +106,7 @@ def context():
                 st.warning('Please, enter a question.')
 
 def embeddings():
+    openai.api_key = st.secrets["openai_api_key"]
     def get_content_from_pdfs(pdf_docs):
         text = ""
         for pdf in pdf_docs:
