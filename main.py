@@ -13,7 +13,7 @@ from langchain.chains import ConversationalRetrievalChain
 
 def main():
     st.title('🧠 GPT-3 for Scientific Papers')
-    st.markdown('Choose which version of the application to run \n - ONLY CONTEXT IS OPERATIVE AT THIS MOMENT,  EMBEDDINGS IS IN DEVELOPMENT')
+    st.markdown('Choose which version of the application to run \n - Context: for asking directly gpt 3.5 TURBO model - precission is higher but it is limited to 16K Tokens \n Embeddings: can load several pdfs documments and transform them into vectors but precission is a little bit lower')
 
     # Choose version
     version = st.selectbox("Choose version", ["Select","Context", "Embeddings"])
