@@ -126,12 +126,12 @@ def embeddings():
         return chunks
 
     def generate_vectorstore(text_chunks):
-        embeddings = OpenAIEmbeddings(openai_api_key=openai.api_key)
+        embeddings = OpenAIEmbeddings(api_key=openai.api_key)
         vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
         return vectorstore
 
     def create_conversation_chain(vectorstore):
-        llm = ChatOpenAI(openai_api_key=openai.api_key)
+        llm = ChatOpenAI(api_key=openai.api_key)
         memory = ConversationBufferMemory(
             memory_key='chat_history', return_messages=True)
         conversation_chain = ConversationalRetrievalChain.from_llm(
