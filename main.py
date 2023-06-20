@@ -13,7 +13,7 @@ from langchain.chains import ConversationalRetrievalChain
 
 def main():
     st.title('🧠 GPT-3 for Scientific Papers')
-    st.markdown('Choose which version of the application to run')
+    st.markdown('Choose which version of the application to run -currently only context is working - embeddings is in development')
 
     # Choose version
     version = st.selectbox("Choose version", ["Select","Context", "Embeddings"])
