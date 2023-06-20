@@ -11,7 +11,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 
 # Initialize your OpenAI API credentials
-openai.api_key = "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"
+openai.api_key = st.secrets["openai_api_key"]
 
 def main():
     st.title('🧠 GPT-3 for Scientific Papers')
