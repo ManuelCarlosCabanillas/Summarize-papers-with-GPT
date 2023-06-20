@@ -126,7 +126,7 @@ def embeddings():
         return chunks
 
     def generate_vectorstore(text_chunks):
-        embeddings = OpenAIEmbeddings()
+        embeddings = OpenAIEmbeddings(api_key=openai.api_key)
         vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
         return vectorstore
 
