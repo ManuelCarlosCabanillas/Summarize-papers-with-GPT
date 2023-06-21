@@ -120,8 +120,8 @@ def embeddings():
     def split_text_into_chunks(text):
         text_splitter = CharacterTextSplitter(
             separator="\n",
-            chunk_size=1000,
-            chunk_overlap=200,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
             length_function=len
         )
         chunks = text_splitter.split_text(text)
